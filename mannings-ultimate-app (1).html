@@ -1,0 +1,670 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mannings HK - Ultimate Prototype</title>
+    <style>
+        :root {
+            --primary: #FF6600; /* Exact Mannings pure orange */
+            --primary-dark: #E65C00;
+            --bg: #F5F5F7;
+            --text-main: #333333;
+            --text-sub: #888888;
+            --white: #FFFFFF;
+            --border: #E5E5E5;
+            --success: #34C759;
+            --blue: #007AFF;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #333;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%; height: 100vh; max-width: 480px;
+            background-color: var(--bg); position: relative;
+            overflow: hidden; box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+        }
+
+        @media (min-width: 481px) {
+            .app-container { height: 850px; max-height: 90vh; border-radius: 30px; }
+        }
+
+        .screen {
+            display: none; flex-direction: column; width: 100%; height: 100%;
+            background-color: var(--bg); position: absolute; top: 0; left: 0;
+            z-index: 1; animation: fadeIn 0.3s ease;
+        }
+
+        .screen.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            height: 60px; background-color: var(--white); display: flex;
+            align-items: center; justify-content: space-between; padding: 0 16px;
+            border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10;
+        }
+
+        .header-title { font-size: 18px; font-weight: 700; color: var(--text-main); text-align: center; flex-grow: 1; }
+        .back-btn { font-size: 24px; color: var(--primary); cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: flex-start; font-weight: bold; }
+        .header-right { width: 40px; }
+        .content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 90px; }
+
+        .nav-bar {
+            height: 65px; background-color: var(--white); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; align-items: center;
+            position: absolute; bottom: 0; width: 100%; z-index: 20;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-sub); font-size: 11px; cursor: pointer; padding: 8px 12px; transition: 0.2s; position: relative; width: 25%; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 22px; margin-bottom: 4px; }
+        .badge { position: absolute; top: 2px; right: 20%; background-color: var(--primary); color: white; font-size: 10px; font-weight: bold; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+
+        .card { background-color: var(--white); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); cursor: pointer; border: 1px solid var(--border); transition: transform 0.1s; }
+        .card:active { transform: scale(0.98); }
+        .card-row { display: flex; justify-content: space-between; align-items: center; }
+        .arrow-right { color: var(--text-sub); font-weight: bold; }
+
+        .hero-banner { background: linear-gradient(135deg, #FF8000, #FF5500); color: white; border-radius: 16px; padding: 30px 20px; margin-bottom: 20px; text-align: center; box-shadow: 0 8px 20px rgba(255, 102, 0, 0.3); cursor: pointer; }
+        .hero-banner h2 { margin: 0 0 10px 0; font-size: 24px; }
+        .hero-banner p { margin: 0; font-size: 15px; opacity: 0.9; line-height: 1.4; }
+
+        .btn { background-color: var(--primary); color: white; border: none; border-radius: 24px; padding: 16px; font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3); margin-top: 10px; transition: 0.2s; text-align: center; }
+        .btn:active { background-color: var(--primary-dark); transform: scale(0.98); }
+        .btn-outline { background-color: transparent; color: var(--primary); border: 2px solid var(--primary); box-shadow: none; }
+        .btn-small { padding: 8px 16px; font-size: 14px; width: auto; margin-top: 0; }
+
+        .product-row { display: flex; align-items: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .product-img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; background-color: #fff; border: 1px solid var(--border); margin-right: 16px; }
+        .product-info { flex: 1; }
+        .product-title { font-size: 16px; font-weight: bold; color: var(--text-main); margin: 0 0 4px 0; }
+        .product-price { font-size: 18px; font-weight: bold; color: var(--primary); margin: 0; }
+
+        .qty-controls { display: flex; align-items: center; margin-top: 8px; }
+        .qty-btn { width: 32px; height: 32px; border-radius: 16px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
+        .qty-num { margin: 0 16px; font-weight: bold; }
+        .remove-btn { color: #ff3b30; font-size: 20px; padding: 8px; cursor: pointer; }
+
+        .large-image { width: 100%; border-radius: 16px; margin-bottom: 20px; object-fit: cover; border: 1px solid var(--border); }
+        .tag { display: inline-block; background-color: rgba(255, 102, 0, 0.1); color: var(--primary); padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold; margin-bottom: 8px; }
+
+        /* Inputs */
+        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .input-field { flex: 1; padding: 12px 15px; border-radius: 12px; border: 1px solid var(--border); font-size: 16px; outline: none; }
+        .input-field:focus { border-color: var(--primary); }
+
+        .yuu-banner { background: #1B3664; color: white; padding: 15px 20px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- 1. HOME SCREEN -->
+    <div id="home" class="screen active">
+        <div class="header">
+            <div class="header-right"></div>
+            <div class="header-title" style="color: var(--primary); font-size: 20px;">Mannings 萬寧</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content">
+            <div class="yuu-banner">
+                <div>
+                    <h3 style="margin: 0 0 5px 0; color: #5AC8FA;">yuu Member</h3>
+                    <div style="font-size: 24px; font-weight: bold;">2,847 Points</div>
+                </div>
+                <div style="font-size: 40px;">🪙</div>
+            </div>
+
+            <div class="hero-banner" onclick="showScreen('pharm-home')">
+                <div style="font-size: 40px; margin-bottom: 10px;">🩺</div>
+                <h2>Digital Pharmacist</h2>
+                <p>AI Care Plans & Live Consultations</p>
+            </div>
+
+            <div class="card" onclick="showScreen('scan-home')" style="text-align: center; padding: 30px;">
+                <div style="font-size: 40px; margin-bottom: 10px;">📱</div>
+                <h3 style="color: var(--primary); margin: 0 0 10px 0; font-size: 20px;">Scan & Deliver</h3>
+                <p style="color: var(--text-sub); margin: 0; font-size: 14px;">Scan in-store, checkout in app, free home delivery.</p>
+            </div>
+
+            <h3 style="margin-top: 10px;">Recommended for You</h3>
+            <div style="display: flex; gap: 10px;">
+                <div style="width: 48%;" onclick="showScreen('product-detail')">
+                    <img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/499add389a1700b63e54f0545b532daeebd88649.jpg" style="width: 100%; border-radius: 10px; border: 1px solid #ddd; height: 140px; object-fit: cover;">
+                    <div style="font-size: 14px; font-weight: bold; margin-top: 5px;">Vitamin C 1000mg</div>
+                    <div style="color: var(--primary); font-weight: bold;">HK$68.00</div>
+                </div>
+                <div style="width: 48%;" onclick="showScreen('product-detail')">
+                    <img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/8501ed650299f8b3efac037af748da58ef89e185.jpg" style="width: 100%; border-radius: 10px; border: 1px solid #ddd; height: 140px; object-fit: cover;">
+                    <div style="font-size: 14px; font-weight: bold; margin-top: 5px;">Claritin Allergy</div>
+                    <div style="color: var(--primary); font-weight: bold;">HK$89.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. PHARMACIST HOME -->
+    <div id="pharm-home" class="screen">
+        <div class="header">
+            <div class="back-btn" onclick="showScreen('home')">←</div>
+            <div class="header-title">Digital Pharmacist</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content">
+            <h3 style="margin-top: 0;">How can we help you today?</h3>
+
+            <div class="card card-row" onclick="showScreen('symptom')">
+                <div style="display: flex; align-items: center;">
+                    <div style="font-size: 30px; margin-right: 15px; background: #fff0e6; padding: 15px; border-radius: 12px;">🤒</div>
+                    <div>
+                        <h4 style="margin: 0 0 5px 0;">Symptom Checker</h4>
+                        <div style="font-size: 13px; color: var(--text-sub);">Get a personalized care plan</div>
+                    </div>
+                </div>
+                <div class="arrow-right">></div>
+            </div>
+
+            <div class="card card-row" onclick="showScreen('camera')">
+                <div style="display: flex; align-items: center;">
+                    <div style="font-size: 30px; margin-right: 15px; background: #fff0e6; padding: 15px; border-radius: 12px;">📸</div>
+                    <div>
+                        <h4 style="margin: 0 0 5px 0;">Product AI Scanner</h4>
+                        <div style="font-size: 13px; color: var(--text-sub);">Check safety & compatibility</div>
+                    </div>
+                </div>
+                <div class="arrow-right">></div>
+            </div>
+
+            <div class="card card-row" onclick="showScreen('chat')">
+                <div style="display: flex; align-items: center;">
+                    <div style="font-size: 30px; margin-right: 15px; background: #fff0e6; padding: 15px; border-radius: 12px;">💬</div>
+                    <div>
+                        <h4 style="margin: 0 0 5px 0;">Live Consultation</h4>
+                        <div style="font-size: 13px; color: var(--text-sub);">Chat with Pharmacist Jenny</div>
+                    </div>
+                </div>
+                <div class="arrow-right">></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. CAMERA SCANNER -->
+    <div id="camera" class="screen">
+        <div class="header">
+            <div class="back-btn" onclick="showScreen('pharm-home')">←</div>
+            <div class="header-title">Scan Product</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content" style="text-align: center;">
+            <p>Align the product label in the frame</p>
+            <img src="https://user-gen-media-assets.s3.amazonaws.com/gemini_images/d222668a-4566-487d-aee9-b14932fe897a.png" class="large-image" style="height: 400px; object-fit: cover;">
+            <button class="btn" onclick="showScreen('care-plan')">Generate AI Analysis</button>
+        </div>
+    </div>
+
+    <!-- 4. SYMPTOM CHECK -->
+    <div id="symptom" class="screen">
+        <div class="header">
+            <div class="back-btn" onclick="showScreen('pharm-home')">←</div>
+            <div class="header-title">Symptoms</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content">
+            <h3>What is your main symptom?</h3>
+            <div class="card card-row" onclick="showScreen('care-plan')"><div>Allergies / Runny Nose</div><div class="arrow-right">></div></div>
+            <div class="card card-row" onclick="showScreen('care-plan')"><div>Cold & Flu</div><div class="arrow-right">></div></div>
+            <div class="card card-row" onclick="showScreen('care-plan')"><div>Skin Irritation</div><div class="arrow-right">></div></div>
+            <div class="card card-row" onclick="showScreen('care-plan')"><div>Digestion Issues</div><div class="arrow-right">></div></div>
+        </div>
+    </div>
+
+    <!-- 5. CARE PLAN -->
+    <div id="care-plan" class="screen">
+        <div class="header">
+            <div class="back-btn" onclick="goBack()">←</div>
+            <div class="header-title">Your Care Plan</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content">
+            <div style="background-image: url('https://user-gen-media-assets.s3.amazonaws.com/seedream_images/2cd35826-8c91-465c-8a5b-ff6ff96b058a.png'); background-size: cover; background-position: center; height: 180px; border-radius: 16px; margin-bottom: 20px; display: flex; align-items: flex-end; padding: 20px;">
+                <div style="background: rgba(0,0,0,0.7); color: white; padding: 10px 15px; border-radius: 10px; width: 100%;">
+                    <h3 style="margin: 0 0 5px 0;">Allergy Relief Plan</h3>
+                    <div style="font-size: 13px; color: var(--success);">Pharmacist Approved ✓</div>
+                </div>
+            </div>
+
+            <h4 style="margin-bottom: 10px;">Recommended regimen for fast relief</h4>
+
+            <div class="card" style="padding: 15px;">
+                <div class="product-row" style="border: none; padding: 0; margin: 0;">
+                    <img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/8501ed650299f8b3efac037af748da58ef89e185.jpg" class="product-img" onclick="showScreen('product-detail')">
+                    <div class="product-info">
+                        <div class="tag">Non-Drowsy</div>
+                        <h4 class="product-title">Claritin 10mg</h4>
+                        <p class="product-price">HK$89.00</p>
+                    </div>
+                </div>
+                <button class="btn" style="padding: 10px; margin-top: 15px;" onclick="addToCart('Claritin 10mg')">Add to Delivery Cart</button>
+            </div>
+
+            <button class="btn btn-outline" onclick="showScreen('chat')">💬 Consult Pharmacist Jenny</button>
+        </div>
+    </div>
+
+    <!-- 6. PHARMACIST CHAT -->
+    <div id="chat" class="screen">
+        <div class="header">
+            <div class="back-btn" onclick="goBack()">←</div>
+            <div class="header-title">Pharmacist Jenny</div>
+            <div class="header-right" style="color: var(--success); font-size: 12px;">● Online</div>
+        </div>
+        <div class="content" style="padding: 0;">
+            <img src="https://user-gen-media-assets.s3.amazonaws.com/gemini_images/d42340cb-3897-4d16-b6e7-329e84d05d4c.png" style="width: 100%; height: 100%; object-fit: cover; object-position: top;">
+
+            <div style="position: absolute; bottom: 80px; left: 0; width: 100%; padding: 15px; background: white; border-top: 1px solid var(--border); display: flex;">
+                <input type="text" placeholder="Type a message..." style="flex: 1; padding: 12px 15px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg); outline: none; font-size: 15px;">
+                <div style="background: var(--primary); color: white; width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; margin-left: 10px; cursor: pointer;" onclick="alert('Message sent to pharmacist!')">
+                    ↑
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. SCAN & DELIVER HOME -->
+    <div id="scan-home" class="screen">
+        <div class="header">
+            <div class="back-btn" onclick="showScreen('home')">←</div>
+            <div class="header-title">Scan & Deliver</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content" style="text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%;">
+            <div style="font-size: 60px; margin-bottom: 20px;">🛒</div>
+            <h2 style="margin: 0 0 10px 0;">In-Store Scanner</h2>
+            <p style="color: var(--text-sub); margin-bottom: 40px;">Shop hands-free! Scan products in the store and we'll deliver them directly to your home.</p>
+
+            <div style="border: 4px dashed var(--primary); padding: 40px; border-radius: 20px; margin-bottom: 30px; cursor: pointer;" onclick="showScreen('product-detail')">
+                <div style="font-size: 40px; margin-bottom: 10px;">📸</div>
+                <div style="font-weight: bold; color: var(--primary);">Tap to open camera</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 8. PRODUCT DETAIL -->
+    <div id="product-detail" class="screen">
+        <div class="header">
+            <div class="back-btn" onclick="goBack()">←</div>
+            <div class="header-title">Product Details</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content">
+            <img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/499add389a1700b63e54f0545b532daeebd88649.jpg" class="large-image" style="height: 300px; object-fit: contain; padding: 20px; background: white;">
+
+            <div class="tag">Online Exclusive Price</div>
+            <h2 style="margin: 0 0 10px 0;">Mannings Effervescent Vitamin C 1000mg + Zinc</h2>
+            <p style="color: var(--text-sub); margin: 0 0 15px 0;">30 tablets • Orange flavor • Immunity Boost</p>
+
+            <div style="font-size: 28px; font-weight: bold; color: var(--primary); margin-bottom: 20px;">HK$68.00</div>
+
+            <button class="btn" onclick="addToCart('Vitamin C')">Add to Delivery Cart</button>
+            <button class="btn btn-outline" style="margin-top: 10px;" onclick="alert('Item reserved for you. Please head to counter 2.')">Reserve & Collect In-Store</button>
+        </div>
+    </div>
+
+    <!-- 9. CART -->
+    <div id="cart" class="screen">
+        <div class="header">
+            <div class="back-btn" onclick="showScreen('home')">←</div>
+            <div class="header-title">Delivery Cart</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content">
+            <div class="card" id="cart-item-1">
+                <div class="product-row" style="border: none; padding: 0; margin: 0;">
+                    <img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/8501ed650299f8b3efac037af748da58ef89e185.jpg" class="product-img">
+                    <div class="product-info">
+                        <h4 class="product-title">Claritin 10mg</h4>
+                        <p class="product-price">HK$89.00</p>
+                        <div class="qty-controls">
+                            <div class="qty-btn" onclick="alert('Quantity updated')">-</div>
+                            <span class="qty-num">1</span>
+                            <div class="qty-btn" onclick="alert('Quantity updated')">+</div>
+                        </div>
+                    </div>
+                    <div class="remove-btn" onclick="document.getElementById('cart-item-1').style.display='none'; updateCartCount(-1)">✕</div>
+                </div>
+            </div>
+
+            <div class="card" id="cart-item-2">
+                <div class="product-row" style="border: none; padding: 0; margin: 0;">
+                    <img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/499add389a1700b63e54f0545b532daeebd88649.jpg" class="product-img">
+                    <div class="product-info">
+                        <h4 class="product-title">Vitamin C + Zinc</h4>
+                        <p class="product-price">HK$68.00</p>
+                        <div class="qty-controls">
+                            <div class="qty-btn" onclick="alert('Quantity updated')">-</div>
+                            <span class="qty-num">1</span>
+                            <div class="qty-btn" onclick="alert('Quantity updated')">+</div>
+                        </div>
+                    </div>
+                    <div class="remove-btn" onclick="document.getElementById('cart-item-2').style.display='none'; updateCartCount(-1)">✕</div>
+                </div>
+            </div>
+
+            <!-- Coupon Section (New Feature) -->
+            <div class="card">
+                <h4 style="margin: 0 0 10px 0;">Apply e-Coupon</h4>
+                <div class="input-group">
+                    <input type="text" class="input-field" id="coupon-input" placeholder="Enter code (e.g. SAVE20)">
+                    <button class="btn btn-small" onclick="applyCoupon()">Apply</button>
+                </div>
+                <div id="coupon-msg" style="color: var(--success); font-size: 13px; display: none;">Coupon applied! HK$20.00 deducted.</div>
+            </div>
+
+            <div class="card" style="background: #FFF8F5; border-color: var(--primary);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span style="color: var(--text-sub);">Subtotal</span>
+                    <span>HK$157.00</span>
+                </div>
+                <div id="discount-row" style="display: none; justify-content: space-between; margin-bottom: 10px;">
+                    <span style="color: var(--success);">Discount (SAVE20)</span>
+                    <span style="color: var(--success);">-HK$20.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span style="color: var(--text-sub);">Delivery Fee</span>
+                    <span style="color: var(--success);">FREE</span>
+                </div>
+                <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 15px 0;">
+                <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: bold;">
+                    <span>Total</span>
+                    <span style="color: var(--primary);" id="cart-total">HK$157.00</span>
+                </div>
+            </div>
+
+            <button class="btn" onclick="showScreen('checkout')">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <!-- 10. CHECKOUT -->
+    <div id="checkout" class="screen">
+        <div class="header">
+            <div class="back-btn" onclick="showScreen('cart')">←</div>
+            <div class="header-title">Checkout</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content">
+            <h3 style="margin-top: 0;">Delivery Address</h3>
+            <div class="card card-row">
+                <div>
+                    <div style="font-weight: bold; margin-bottom: 5px;">Home</div>
+                    <div style="color: var(--text-sub); font-size: 14px; line-height: 1.5;">
+                        Flat 12B, Tower 3, The Residence<br>
+                        Mong Kok, Kowloon<br>
+                        +852 9123 4567
+                    </div>
+                </div>
+                <div style="color: var(--blue);">Edit</div>
+            </div>
+
+            <h3>Delivery Time</h3>
+            <div class="card" style="border: 2px solid var(--primary); background: #FFF8F5;">
+                <div style="font-weight: bold; color: var(--primary);">Today (Express Delivery)</div>
+                <div style="color: var(--text-sub); font-size: 14px;">Between 4:00 PM - 6:00 PM</div>
+            </div>
+
+            <h3>Payment Method</h3>
+            <div class="card card-row">
+                <div style="display: flex; align-items: center;">
+                    <div style="background: #000; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-right: 10px;">Pay</div>
+                    <span>Apple Pay</span>
+                </div>
+                <div style="color: var(--primary); font-weight: bold;">✓</div>
+            </div>
+
+            <button class="btn" onclick="showScreen('success')" style="margin-top: 20px;">Pay & Place Order</button>
+        </div>
+    </div>
+
+    <!-- 11. SUCCESS -->
+    <div id="success" class="screen">
+        <div class="content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; text-align: center;">
+            <div style="width: 100px; height: 100px; background-color: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 50px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(52, 199, 89, 0.3);">✓</div>
+            <h2 style="margin: 0 0 10px 0;">Order Confirmed!</h2>
+            <p style="color: var(--text-sub); margin-bottom: 30px;">Order #MN12345678<br>Your items are being prepared.</p>
+
+            <div class="card" style="width: 100%; text-align: left; margin-bottom: 30px;" onclick="showScreen('orders')">
+                <div style="font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between;">
+                    <span>Status: Packing</span>
+                    <span style="color: var(--blue); font-weight: normal; font-size: 14px;">Track ></span>
+                </div>
+                <div style="height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 10px;">
+                    <div style="width: 33%; height: 100%; background: var(--primary);"></div>
+                </div>
+                <div style="font-size: 13px; color: var(--text-sub);">Estimated delivery: 5:15 PM</div>
+            </div>
+
+            <button class="btn" onclick="showScreen('home')">Back to Home</button>
+        </div>
+    </div>
+
+    <!-- 12. NEW: PROFILE SCREEN (FULLY FUNCTIONAL) -->
+    <div id="profile" class="screen">
+        <div class="header">
+            <div class="header-right"></div>
+            <div class="header-title">My Profile</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content">
+            <!-- User Info Card -->
+            <div class="card" style="background: linear-gradient(135deg, #FF6600, #FF9933); color: white; border: none; padding: 25px 20px;">
+                <div style="display: flex; align-items: center;">
+                    <div style="width: 60px; height: 60px; background: white; border-radius: 30px; display: flex; align-items: center; justify-content: center; font-size: 30px; margin-right: 15px;">👨‍💻</div>
+                    <div>
+                        <h2 style="margin: 0 0 5px 0;">Otto</h2>
+                        <div style="opacity: 0.9; font-size: 13px;">Yuu Member ID: 8172 6354</div>
+                        <div style="font-weight: bold; margin-top: 5px; background: rgba(0,0,0,0.2); display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px;">🪙 2,847 Points</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 10px;">My Account</h3>
+            <div class="card card-row" onclick="showScreen('orders')">
+                <div style="display: flex; align-items: center;"><span style="font-size: 20px; margin-right: 15px;">📦</span> My Orders</div>
+                <div class="arrow-right">></div>
+            </div>
+            <div class="card card-row" onclick="showScreen('coupons')">
+                <div style="display: flex; align-items: center;"><span style="font-size: 20px; margin-right: 15px;">🎫</span> My e-Coupons</div>
+                <div class="arrow-right">></div>
+            </div>
+            <div class="card card-row" onclick="showScreen('care-plan')">
+                <div style="display: flex; align-items: center;"><span style="font-size: 20px; margin-right: 15px;">🩺</span> My Care Plans</div>
+                <div class="arrow-right">></div>
+            </div>
+
+            <h3 style="margin-top: 10px;">Settings</h3>
+            <div class="card card-row" onclick="alert('Opening settings...')">
+                <div style="display: flex; align-items: center;"><span style="font-size: 20px; margin-right: 15px;">⚙️</span> App Settings</div>
+                <div class="arrow-right">></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 13. NEW: ORDERS SCREEN -->
+    <div id="orders" class="screen">
+        <div class="header">
+            <div class="back-btn" onclick="showScreen('profile')">←</div>
+            <div class="header-title">My Orders</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content">
+            <!-- Active Order -->
+            <div class="card" style="border-left: 4px solid var(--primary);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                    <span style="font-weight: bold;">Order #MN12345678</span>
+                    <span style="color: var(--primary); font-weight: bold;">Packing</span>
+                </div>
+                <p style="margin: 5px 0;">1x Claritin, 1x Vitamin C</p>
+                <p style="color: var(--text-sub); font-size: 12px; margin: 0 0 15px 0;">Placed Today, 3:28 PM</p>
+                <button class="btn btn-outline" style="padding: 8px; margin: 0;" onclick="showScreen('success')">Track Delivery</button>
+            </div>
+
+            <!-- Past Order -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                    <span style="font-weight: bold;">Order #MN00987654</span>
+                    <span style="color: var(--text-sub);">Delivered</span>
+                </div>
+                <p style="margin: 5px 0;">2x Hand Sanitizer, 1x Mask Box</p>
+                <p style="color: var(--text-sub); font-size: 12px; margin: 0 0 15px 0;">Placed Feb 28, 2026</p>
+                <button class="btn btn-outline" style="padding: 8px; margin: 0; color: var(--text-main); border-color: var(--border);">Reorder Items</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 14. NEW: COUPONS SCREEN -->
+    <div id="coupons" class="screen">
+        <div class="header">
+            <div class="back-btn" onclick="showScreen('profile')">←</div>
+            <div class="header-title">My e-Coupons</div>
+            <div class="header-right"></div>
+        </div>
+        <div class="content">
+            <div class="card" style="border-left: 4px solid var(--primary); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="margin: 0 0 5px 0; color: var(--primary);">HK$20 OFF</h3>
+                    <p style="color: var(--text-sub); font-size: 13px; margin: 0;">Scan & Deliver orders over $100</p>
+                    <div style="background: #f0f0f0; padding: 5px 10px; border-radius: 4px; display: inline-block; font-family: monospace; font-weight: bold; margin-top: 10px; letter-spacing: 1px;">SAVE20</div>
+                </div>
+                <div style="color: var(--blue); font-size: 14px;" onclick="showScreen('cart')">Use ></div>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--border); opacity: 0.7;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h3 style="margin: 0 0 5px 0; color: var(--text-sub);">10% OFF Vitamins</h3>
+                        <p style="color: var(--text-sub); font-size: 13px; margin: 0;">Valid until Feb 28, 2026</p>
+                        <div style="background: #f0f0f0; padding: 5px 10px; border-radius: 4px; display: inline-block; font-family: monospace; font-weight: bold; margin-top: 10px; text-decoration: line-through;">VIT10</div>
+                    </div>
+                    <div style="color: var(--text-sub); font-size: 12px; font-weight: bold;">EXPIRED</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- BOTTOM NAVIGATION -->
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="showScreen('home')" id="nav-home">
+            <div class="nav-icon">🏠</div>
+            <div>Home</div>
+        </div>
+        <div class="nav-item" onclick="showScreen('pharm-home')" id="nav-health">
+            <div class="nav-icon">🩺</div>
+            <div>Health</div>
+        </div>
+        <div class="nav-item" onclick="showScreen('cart')" id="nav-cart">
+            <div class="nav-icon">🛒</div>
+            <div>Cart</div>
+            <div class="badge" id="cart-badge">2</div>
+        </div>
+        <div class="nav-item" onclick="showScreen('profile')" id="nav-profile">
+            <div class="nav-icon">👤</div>
+            <div>Profile</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let cartCount = 2;
+    let historyStack = ['home'];
+    let couponApplied = false;
+
+    function showScreen(screenId) {
+        // Handle Back button logic array
+        if(historyStack[historyStack.length-1] !== screenId) {
+            historyStack.push(screenId);
+        }
+
+        // Hide all screens
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+        // Show target screen
+        document.getElementById(screenId).classList.add('active');
+
+        // Scroll to top
+        const contentArea = document.getElementById(screenId).querySelector('.content');
+        if(contentArea) contentArea.scrollTop = 0;
+
+        // Update bottom nav active state based on screen families
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        if(screenId === 'home') document.getElementById('nav-home').classList.add('active');
+        if(['pharm-home', 'symptom', 'camera', 'chat', 'care-plan'].includes(screenId)) document.getElementById('nav-health').classList.add('active');
+        if(['cart', 'checkout', 'scan-home', 'product-detail'].includes(screenId)) document.getElementById('nav-cart').classList.add('active');
+        if(['profile', 'orders', 'coupons'].includes(screenId)) document.getElementById('nav-profile').classList.add('active');
+    }
+
+    function goBack() {
+        if(historyStack.length > 1) {
+            historyStack.pop(); // remove current
+            const prevScreen = historyStack[historyStack.length - 1];
+
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(prevScreen).classList.add('active');
+
+            // Update Nav properly
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if(prevScreen === 'home') document.getElementById('nav-home').classList.add('active');
+            if(['pharm-home', 'symptom', 'camera', 'chat', 'care-plan'].includes(prevScreen)) document.getElementById('nav-health').classList.add('active');
+            if(['cart', 'checkout', 'scan-home', 'product-detail'].includes(prevScreen)) document.getElementById('nav-cart').classList.add('active');
+            if(['profile', 'orders', 'coupons'].includes(prevScreen)) document.getElementById('nav-profile').classList.add('active');
+        } else {
+            showScreen('home');
+        }
+    }
+
+    function addToCart(itemName) {
+        cartCount++;
+        document.getElementById('cart-badge').innerText = cartCount;
+        alert(itemName + ' added to your Delivery Cart!');
+    }
+
+    function updateCartCount(change) {
+        cartCount += change;
+        if (cartCount < 0) cartCount = 0;
+        document.getElementById('cart-badge').innerText = cartCount;
+    }
+
+    function applyCoupon() {
+        const input = document.getElementById('coupon-input').value.toUpperCase();
+        if (input === 'SAVE20' && !couponApplied) {
+            couponApplied = true;
+            document.getElementById('coupon-msg').style.display = 'block';
+            document.getElementById('discount-row').style.display = 'flex';
+            document.getElementById('cart-total').innerText = 'HK$137.00';
+            document.getElementById('coupon-input').value = '';
+        } else if (couponApplied) {
+            alert('Coupon already applied.');
+        } else {
+            alert('Invalid coupon code. Try "SAVE20".');
+        }
+    }
+</script>
+
+</body>
+</html>
